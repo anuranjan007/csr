@@ -14,30 +14,18 @@ const AppLayout = () => {
   }, [selectedOption, navigate]);
 
   useEffect(() => {
-    let urlString = "";
+    let urlString = window.location.href;
+    urlString = urlString.replace(/([^:]\/)\/+/g, "$1");
 
-        if (window.__TAURI__) {
-            // For Tauri app, get the current window label or pathname
-            urlString = window.location.pathname; 
-        } else {
-            // For Web app
-            urlString = window.location.href;
-            urlString = urlString.replace(/([^:]\/)\/+/g, "$1");
-        }
-
-        if (urlString) {
-            const url = new URL(window.location.origin + urlString);
-            const jobId = url.searchParams.get("jobId") || url.searchParams.get("jobid");
-            const urlParamToken = url.searchParams.get("token");
-
-            if (!jobId && !urlParamToken) {
-                navigate("/UnAuthorizedUser");
-            } else {
-                navigate(`/csrView?jobId=${jobId}&token=${urlParamToken}`);
-            }
-        } else {
-            navigate("/UnAuthorizedUser");
-        }
+    const url = new URL(urlString);
+    const jobId = url.searchParams.get("jobId") || url.searchParams.get("jobid");
+    const urlParamToken = url.searchParams.get("token");
+    if(jobId && urlParamToken){
+      navigate(`/csrView?jobId=${jobId}&token=${urlParamToken}`);
+    }
+    else{
+      navigate("/UnAuthorizedUser")
+    }
   }, []);
 
   return (
