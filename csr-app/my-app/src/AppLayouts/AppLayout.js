@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppRoutes from "./AppRoutes";
+import { listen } from "@tauri-apps/api/event";
 
 const AppLayout = () => {
   const navigate = useNavigate();
@@ -12,21 +13,28 @@ const AppLayout = () => {
   useEffect(() => {
     sessionStorage.setItem("selectedOption", selectedOption);
   }, [selectedOption, navigate]);
-
   useEffect(() => {
-    let urlString = window.location.href;
-    urlString = urlString.replace(/([^:]\/)\/+/g, "$1");
+    // Listen for Tauri deep link events
+    const unlisten = listen("open-url", (event) => {
+      console.log("Deep link received:", event.payload);
 
-    const url = new URL(urlString);
-    const jobId = url.searchParams.get("jobId") || url.searchParams.get("jobid");
-    const urlParamToken = url.searchParams.get("token");
-    if(jobId && urlParamToken){
-      navigate(`/csrView?jobId=${jobId}&token=${urlParamToken}`);
-    }
-    else{
-      navigate("/UnAuthorizedUser")
-    }
-  }, []);
+      const urlString = `csragent://${event.payload}`;
+      const url = new URL(urlString);
+      const jobId = url.searchParams.get("jobId") || url.searchParams.get("jobid");
+      const token = url.searchParams.get("token");
+
+      if (jobId && token) {
+        navigate(`/csrView?jobId=${jobId}&token=${token}`);
+      } else {
+        navigate("/UnAuthorizedUser");
+      }
+    });
+
+    return () => {
+      unlisten.then((fn) => fn()); // Cleanup listener on unmount
+    };
+  }, [navigate]);
+
 
   return (
     <div>

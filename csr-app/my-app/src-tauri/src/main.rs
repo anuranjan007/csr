@@ -1,6 +1,22 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+use tauri::{App, Manager};
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
-fn main() {
-  app_lib::run();
+struct MyState {
+  value: String,
 }
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+  tauri::Builder::default()
+      .manage(MyState {
+        value: "Hello, World!".to_string(),
+      })
+      .setup(|app| {
+          let handle = app.handle();
+          let shortcut_manager = handle.global_shortcut();
+          shortcut_manager.register("Ctrl+Shift+S").expect("Failed to register shortcut");
+          Ok(())
+      })
+      .run(tauri::generate_context!());
+  Ok(())
+}
+
